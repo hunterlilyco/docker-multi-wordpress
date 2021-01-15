@@ -26,7 +26,7 @@ services:
       - ./wordpress/production:/var/www/html
       - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     environment:
-      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
+      WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_NAME: "production_${MYSQL_DATABASE}"
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
@@ -45,7 +45,7 @@ services:
       - ./wordpress/staging:/var/www/html
       - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     environment:
-      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
+      WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_NAME: "staging_${MYSQL_DATABASE}"
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
@@ -64,7 +64,7 @@ services:
       - ./wordpress/development:/var/www/html
       - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     environment:
-      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
+      WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_NAME: "development_${MYSQL_DATABASE}"
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
