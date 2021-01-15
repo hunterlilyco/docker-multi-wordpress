@@ -1,47 +1,137 @@
 version: '3'
 
 services:
-  new-site-db:
-    container_name: ${CONTAINER_DB_NAME}
-    image: ${DB_IMAGE:-mariadb}:${DB_VERSION:-latest}
+  mysql:
+    container_name: ${CONTAINER_SITE_NAME}_mysql
+    image: ${DB_IMAGE:-mysql}:${DB_VERSION:-latest}
     restart: unless-stopped
     volumes:
-      - ${DB_FILES}:/var/lib/mysql
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf.d/create_databases.sh:/docker-entrypoint-initdb.d/create_databases.sh
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_SUFFIX: ${MYSQL_DATABASE}
+    security_opt:
+      - seccomp:unconfined
 
-  new-site-wordpress:
+  production_wordpress:
     depends_on:
-      - new-site-db
-    container_name: ${CONTAINER_SITE_NAME}
+      - mysql
+    container_name: "${CONTAINER_SITE_NAME}_production_wordpress"
     image: ${SITE_IMAGE:-wordpress}:${SITE_VERSION:-latest}
     restart: unless-stopped
     volumes:
-      - ${SITE_FILES}:/var/www/html
-      - ./conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./wordpress/production:/var/www/html
+      - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     environment:
       WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_NAME: "production_${MYSQL_DATABASE}"
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
-      VIRTUAL_HOST: ${DOMAINS}
-      LETSENCRYPT_HOST: ${DOMAINS}
+    logging:
+      options:
+        max-size: ${LOGGING_OPTIONS_MAX_SIZE:-200k}
+
+  staging_wordpress:
+    depends_on:
+      - mysql
+    container_name: "${CONTAINER_SITE_NAME}_staging_wordpress"
+    image: ${SITE_IMAGE:-wordpress}:${SITE_VERSION:-latest}
+    restart: unless-stopped
+    volumes:
+      - ./wordpress/staging:/var/www/html
+      - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
+      WORDPRESS_DB_NAME: "staging_${MYSQL_DATABASE}"
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+    logging:
+      options:
+        max-size: ${LOGGING_OPTIONS_MAX_SIZE:-200k}
+
+  development_wordpress:
+    depends_on:
+      - mysql
+    container_name: "${CONTAINER_SITE_NAME}_development_wordpress"
+    image: ${SITE_IMAGE:-wordpress}:${SITE_VERSION:-latest}
+    restart: unless-stopped
+    volumes:
+      - ./wordpress/development:/var/www/html
+      - ./wordpress/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
+      WORDPRESS_DB_NAME: "development_${MYSQL_DATABASE}"
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+      VIRTUAL_HOST: "dev.${DOMAINS}"
+      LETSENCRYPT_HOST: "dev.${DOMAINS}"
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     logging:
       options:
         max-size: ${LOGGING_OPTIONS_MAX_SIZE:-200k}
 
-  wpcli:
-    image: tatemz/wp-cli
-    volumes:
-      - ${SITE_FILES}:/var/www/html
+  production_nginx:
     depends_on:
-      - new-site-db
-    entrypoint: wp
+      - production_wordpress
+    image: nginx:1.19.4-alpine
+    container_name: ${CONTAINER_SITE_NAME}_production_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/templates/:/etc/nginx/templates
+      - ./wordpress/production:/var/www/html
+    environment:
+      VIRTUAL_HOST: "prod.${DOMAINS}"
+      WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_production_wordpress"
+      LETSENCRYPT_HOST: "prod.${DOMAINS}"
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+
+  staging_nginx:
+    depends_on:
+      - staging_wordpress
+    image: nginx:1.19.4-alpine
+    container_name: ${CONTAINER_SITE_NAME}_staging_nginx
+    build:
+      context: ./nginx/
+    restart: unless-stopped
+    volumes:
+      - ./nginx/templates/:/etc/nginx/templates
+      - ./wordpress/staging:/var/www/html
+    environment:
+      VIRTUAL_HOST: "staging.${DOMAINS}"
+      WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_staging_wordpress"
+      LETSENCRYPT_HOST: "staging.${DOMAINS}"
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+
+  development_nginx:
+    depends_on:
+      - development_wordpress
+    image: nginx:1.19.4-alpine
+    container_name: ${CONTAINER_SITE_NAME}_development_nginx
+    build:
+      context: ./nginx/
+    restart: unless-stopped
+    volumes:
+      - ./nginx/templates/:/etc/nginx/templates
+      - ./wordpress/development:/var/www/html
+    environment:
+      VIRTUAL_HOST: "dev.${DOMAINS}"
+      WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_development_wordpress"
+      LETSENCRYPT_HOST: "dev.${DOMAINS}"
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+
+  # wpcli:
+  #   image: tatemz/wp-cli
+  #   volumes:
+  #     - ${SITE_FILES}:/var/www/html
+  #   depends_on:
+  #     - mysql
+  #   entrypoint: wp
 
 networks:
    default:

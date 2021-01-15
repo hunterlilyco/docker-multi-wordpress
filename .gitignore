@@ -1,5 +1,5 @@
 .env
-mysql/data
-wordpress/production
-wordpress/staging
-wordpress/development
+mysql/data/
+wordpress/production/
+wordpress/staging/
+wordpress/development/
