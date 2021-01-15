@@ -1,16 +1,11 @@
-## Docker Wordpress [automation]
+## Docker Multi-Environment Wordpress [automation]
 
-This repo is part of a larger script to changes in the files must be reviewed. 
+This repo is based off of the existing [docker-wordpress](https://github.com/evertramos/docker-wordpress) repository, adapted to support a common development workflow.
 
-If you are looking of the previous version check branch basic. 
+Features:
 
-# Using Wordpress with SSL enabled integrated with NGINX proxy and autorenew LetsEncrypt certificates
-
-![wordpress-docker-letsencrypt](https://github.com/evertramos/images/raw/master/wordpress.jpg)
-
-This docker-compose should be used with WebProxy (the NGINX Proxy):
-
-[https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion)
+- Automatically create prod / staging / dev wordpress instances based on user configuration.
+- Automatically handle Lets Encrypt SSL generation and nginx reverse proxy when utilized with [docker-compose-letsencrypt-nginx-proxy-companion](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion)
 
 
 ### Usage
@@ -20,7 +15,7 @@ After everything is settle, and you have your three containers running (_proxy, 
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/evertramos/docker-wordpress.git
+git clone https://github.com/hunterlilyco/docker-multi-wordpress.git
 ```
 
 2. Update the service name in your _docker-compose.yml_ file **VERY IMPORTANT**
@@ -46,42 +41,4 @@ docker-compose up -d
 #### Make sure the wordpress data files has user and group set to **www-data**, so you could update, install, delete files from your admin panel.
 
 ----
-
-
-#### WebProxy
-
-[WebProxy - docker-compose-letsencrypt-nginx-proxy-companion](https://github.com/evertramos/docker-compose-letsencrypt-nginx-proxy-companion)
-
-----
-
-### Further Options
-
-#### wp-cli (https://wp-cli.org/)
-
-For whoever uses *wp-cli* here is how to implement it on this repo. 
-
-
-Test to see if it´s working
-
-```bash
-./wp-cli-test.sh
-
-```
-
-If you would, add the alias "wp" to your `.bash_aliases`:
-
-```bash
-alias wp="docker-compose run --rm wpcli"
-```
-
-Next time you need to run a wp-cli command just go to where you have your docker-compose file and run a `wp` command.
-
-----
-
-### Known Issues
-
-#### Azure
-
-Running docker on Azure servers you must mount your database in your disks partitions (example: `/mnt/data/`) so your db container can work. This is a some kind of issue regarding Hyper-V sharing drivers... not really sure why.
-
 
