@@ -69,8 +69,8 @@ services:
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
-      VIRTUAL_HOST: "dev.${DOMAINS}"
-      LETSENCRYPT_HOST: "dev.${DOMAINS}"
+      VIRTUAL_HOST: "dev.${DOMAIN}"
+      LETSENCRYPT_HOST: "dev.${DOMAIN}"
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     logging:
       options:
@@ -86,9 +86,9 @@ services:
       - ./nginx/templates/:/etc/nginx/templates
       - ./wordpress/production:/var/www/html
     environment:
-      VIRTUAL_HOST: "prod.${DOMAINS}"
+      VIRTUAL_HOST: "${DOMAIN}"
       WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_production_wordpress"
-      LETSENCRYPT_HOST: "prod.${DOMAINS}"
+      LETSENCRYPT_HOST: "${DOMAIN}"
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
   staging_nginx:
@@ -103,9 +103,9 @@ services:
       - ./nginx/templates/:/etc/nginx/templates
       - ./wordpress/staging:/var/www/html
     environment:
-      VIRTUAL_HOST: "staging.${DOMAINS}"
+      VIRTUAL_HOST: "staging.${DOMAIN}"
       WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_staging_wordpress"
-      LETSENCRYPT_HOST: "staging.${DOMAINS}"
+      LETSENCRYPT_HOST: "staging.${DOMAIN}"
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
   development_nginx:
@@ -120,9 +120,9 @@ services:
       - ./nginx/templates/:/etc/nginx/templates
       - ./wordpress/development:/var/www/html
     environment:
-      VIRTUAL_HOST: "dev.${DOMAINS}"
+      VIRTUAL_HOST: "dev.${DOMAIN}"
       WORDPRESS_HOST: "${CONTAINER_SITE_NAME}_development_wordpress"
-      LETSENCRYPT_HOST: "dev.${DOMAINS}"
+      LETSENCRYPT_HOST: "dev.${DOMAIN}"
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
   # wpcli:
